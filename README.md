@@ -57,6 +57,8 @@ dotnet add package Eventual2PC
 
 - 一个聚合根，可以同时扮演事务A中的 `Participant` 和事务B的 `Initiator`
 
+- `Initiator` 的聚合根实例，仅允许发起一个事务，只有事务完成后，才可以发起其他事务；此处的事务完成，可以是 `AllParticipantPreCommitSucceed`、`AnyParticipantPreCommitFailed`、`TransactionCompleted` 之一
+
 - 一个 `Participant`，参与多少个事务，需对应定义多少个`Preparation`
 
 - `Participant` 的聚合根实例，允许同时参与多个不同的事务；也可以通过业务代码，在 `PreCommit` 时，判断是否存在其他类型的 `Preparation` 来阻止参与多个事务
@@ -100,6 +102,10 @@ dotnet add package Eventual2PC
 - `Initiator` 接受命令 `AddRolledbackParticipant`，发布 `RolledbackParticipantAdded` 事件；如果所有 `Participant` 的 `Rolledback` 都已处理完成，则发布 `TransactionCompleted` 事件。
 
 ## 发布历史
+
+### 1.0.1（2020/4/27）
+
+- 移除 `TransactionParticipantInfo` 的方法 `ValidateParticipantMustNotExists`，是否抛出异常，由使用方决定
 
 ### 1.0.0（2020/4/25）
 

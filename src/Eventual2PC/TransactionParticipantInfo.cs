@@ -40,17 +40,5 @@ namespace Eventual2PC
         {
             return participants != null && participants.Any(a => a.ParticipantId == ParticipantId);
         }
-
-        /// <summary>
-        /// 验证必须不存在
-        /// </summary>
-        /// <param name="participants">参与者信息列表</param>
-        public void ValidateParticipantMustNotExists(IEnumerable<TransactionParticipantInfo> participants)
-        {
-            if (IsParticipantAlreadyExists(participants))
-            {
-                throw new ApplicationException($"{ParticipantId} has already exists.");
-            }
-        }
     }
 }
