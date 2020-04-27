@@ -10,12 +10,12 @@
     <RepositoryUrl>https://github.com/berkaroad/Eventual2PC</RepositoryUrl>
     <Authors>Jerry Bai</Authors>
     <PackageId>Eventual2PC</PackageId>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <AssemblyVersion>1.0.0</AssemblyVersion>
     <Title>Eventual2PC</Title>
     <Description>最终一致性二阶段提交范式，简化多聚合根之间交互事务的实现。</Description>
     <PackageTags>2pc eventual transaction processmanager saga eda</PackageTags>
-    <PackageReleaseNotes>移除 `TransactionParticipantInfo` 的方法 `ValidateParticipantMustNotExists`，是否抛出异常，由使用方决定。
+    <PackageReleaseNotes>移除异常类 `UnknownTransactionPreparationException`
     </PackageReleaseNotes>
   </PropertyGroup>
 

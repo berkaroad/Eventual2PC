@@ -107,6 +107,10 @@ dotnet add package Eventual2PC
 
 ## 发布历史
 
+### 1.0.2（2020/4/28）
+
+- 移除异常类 `UnknownTransactionPreparationException`
+
 ### 1.0.1（2020/4/27）
 
 - 移除 `TransactionParticipantInfo` 的方法 `ValidateParticipantMustNotExists`，是否抛出异常，由使用方决定
