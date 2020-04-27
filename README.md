@@ -8,7 +8,7 @@
 dotnet add package Eventual2PC
 ```
 
-## 范式
+## 文档
 
 ### 术语定义
 
@@ -51,11 +51,13 @@ dotnet add package Eventual2PC
 - `Rolledback`: 已回滚事件
 
 
-### 规范
+### 规约
 
 - 一个聚合根，可以同时扮演 `Initiator` 和 `Transaction`的角色，如银行转账事务聚合根
 
 - 一个聚合根，可以同时扮演事务A中的 `Participant` 和事务B的 `Initiator`
+
+- `Initiator` 的聚合根实例，发起事务时，必须存在至少一个  `Participant`，且不能把自己作为 `Participant`；
 
 - `Initiator` 的聚合根实例，仅允许发起一个事务，只有事务完成后，才可以发起其他事务；此处的事务完成，可以是 `AllParticipantPreCommitSucceed`、`AnyParticipantPreCommitFailed`、`TransactionCompleted` 之一
 
