@@ -57,7 +57,9 @@ dotnet add package Eventual2PC
 
 - 一个聚合根，可以同时扮演事务A中的 `Participant` 和事务B的 `Initiator`
 
-- `Initiator` 的聚合根实例，发起事务时，必须存在至少一个  `Participant`，且不能把自己作为 `Participant`；
+- `Initiator` 的聚合根实例，发起事务时，必须存在至少一个  `Participant`，且不能把自己作为 `Participant`
+
+- `Initiator` 的聚合根实例，如果处于事务A中，那么将不允许作为事务B的 `Participant`，直到事务A结束，才允许
 
 - `Initiator` 的聚合根实例，仅允许发起一个事务，只有事务完成后，才可以发起其他事务；此处的事务完成，可以是 `AllParticipantPreCommitSucceed`、`AnyParticipantPreCommitFailed`、`TransactionCompleted` 之一
 
