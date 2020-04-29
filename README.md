@@ -16,7 +16,7 @@ dotnet add package Eventual2PC
 
 - `Participant`: 作为事务参与方（仅被修改的聚合根，新增的，不会产生业务失败问题），它是聚合根
 
-- `Preparation`: 事务准备，对应一个具体的业务修改动作；同一个 `Participant` 参与多个事务时，应定义多个事务准备
+- `Preparation`: `Participant` 的事务准备，表示参与事务的业务修改行为，一个事务准备可以用于不同事务
 
 - `Transaction`: 2PC事务，从开始事务，到事务完成，贯穿整个事务生命周期；可以只是一个标识ID（通常使用 `TransactionStarted` 事件的ID），也可以使用代表事务的聚合根（如银行转账的转账事务聚合根）
 
@@ -63,9 +63,9 @@ dotnet add package Eventual2PC
 
 - `Initiator` 的聚合根实例，仅允许发起一个事务，只有事务完成后，才可以发起其他事务；此处的事务完成，可以是 `AllParticipantPreCommitSucceed`、`AnyParticipantPreCommitFailed`、`TransactionCompleted` 之一
 
-- 一个 `Participant`，参与多少个事务，需对应定义多少个`Preparation`
+- `Participant` 参与事务的业务修改行为有多少个，对应定义多少个`Preparation`，与参与的事务数无关
 
-- `Participant` 的聚合根实例，允许同时参与多个不同的事务；也可以通过业务代码，在 `PreCommit` 时，判断是否存在其他类型的 `Preparation` 来阻止参与多个事务
+- `Participant` 的聚合根实例，允许同时参与多个不同的事务；也可以通过业务代码，在 `PreCommit` 时，判断是否存在其他类型的 `Preparation` 来阻止当前 `Preparation` 的 `PreCommit` 操作
 
 - `Initiator` 必须发布事件 `TransactionStarted`、`PreCommitSucceedParticipantAdded`、`PreCommitFailedParticipantAdded`、`AllParticipantPreCommitSucceed`、`AnyParticipantPreCommitFailed`
 
