@@ -10,12 +10,13 @@
     <RepositoryUrl>https://github.com/berkaroad/Eventual2PC</RepositoryUrl>
     <Authors>Jerry Bai</Authors>
     <PackageId>Eventual2PC</PackageId>
-    <Version>1.0.2</Version>
-    <AssemblyVersion>1.0.0</AssemblyVersion>
+    <Version>1.1.0</Version>
+    <AssemblyVersion>1.1.0</AssemblyVersion>
     <Title>Eventual2PC</Title>
     <Description>最终一致性二阶段提交范式，简化多聚合根之间交互事务的实现。</Description>
     <PackageTags>2pc eventual transaction processmanager saga eda cqrs</PackageTags>
-    <PackageReleaseNotes>移除异常类 `UnknownTransactionPreparationException`
+    <PackageReleaseNotes>1）`ITransactionInitiator`接口增加属性 `CurrentTransactionId`、`CurrentTransactionType`
+2）增加事务流转过程中产生的 `Command` 的接口定义
     </PackageReleaseNotes>
   </PropertyGroup>
 

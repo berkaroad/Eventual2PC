@@ -41,5 +41,15 @@
         /// 是否事务在处理中
         /// </summary>
         bool IsTransactionProcessing { get; }
+
+        /// <summary>
+        /// 当前事务ID
+        /// </summary>
+        string CurrentTransactionId { get; }
+
+        /// <summary>
+        /// 当前事务类型
+        /// </summary>
+        byte CurrentTransactionType { get; }
     }
 }

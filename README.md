@@ -22,6 +22,16 @@ dotnet add package Eventual2PC
 
 - `ProcessManager`: CQRS中的概念，作为事务相关消息路由的角色，负责响应 `DomainEvent`、`DomainException` 消息，并发送 `Command` 消息
 
+#### Initiator 命令定义
+
+- `AddPreCommitSucceedParticipant`: 添加预提交成功的参与方
+
+- `AddPreCommitFailedParticipant`: 添加预提交失败的参与方
+
+- `AddCommittedParticipant`: 添加已提交的参与方
+
+- `AddRolledbackParticipant`: 添加已回滚的参与方
+
 #### Initiator 事件定义
 
 - `TransactionStarted`: 事务已发起事件
@@ -40,6 +50,14 @@ dotnet add package Eventual2PC
 
 - `TransactionCompleted`: 事务已完成事件（Option），并包含是否事务已提交的状态
 
+#### Participant 命令定义
+
+- `PreCommit`: 预提交
+
+- `Commit`: 提交
+
+- `Rollback`: 回滚
+
 #### Participant 事件定义
 
 - `PreCommitSucceed`: 预提交已成功事件
@@ -49,7 +67,6 @@ dotnet add package Eventual2PC
 - `Committed`: 已提交事件
 
 - `Rolledback`: 已回滚事件
-
 
 ### 规约
 
@@ -106,6 +123,12 @@ dotnet add package Eventual2PC
 - `Initiator` 接受命令 `AddRolledbackParticipant`，发布 `RolledbackParticipantAdded` 事件；如果所有 `Participant` 的 `Rolledback` 都已处理完成，则发布 `TransactionCompleted` 事件。
 
 ## 发布历史
+
+### 1.1.0（2020/04/30）
+
+- 1）`ITransactionInitiator`接口增加属性 `CurrentTransactionId`、`CurrentTransactionType`
+
+- 2）增加事务流转过程中产生的 `Command` 的接口定义
 
 ### 1.0.2（2020/4/28）
 
