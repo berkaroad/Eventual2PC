@@ -1,6 +1,14 @@
 # Eventual2PC
 
-最终一致性二阶段提交范式，简化多聚合根之间交互事务的实现。任何基于cqrs + eda 实现多聚合根最终一致性的框架，都可使用。
+最终一致性2PC范式，提供多聚合根之间交互事务的抽象接口。任何基于cqrs + eda 实现多聚合根最终一致性的框架，都可基于此接口进行实现，以达到提高开发效率的目的。
+
+由于是最终一致性，且事务控制在业务端，此处的`2PC`概念，可以等效于 `TCC` 概念。
+
+```
+Preapre => Try
+Commit => Confirm
+Rollback => Cancel
+```
 
 ## 安装
 
@@ -10,17 +18,47 @@ dotnet add package Eventual2PC
 
 ## 文档
 
+### 2PC定义
+
+2pc(two-phase commit protocol）是非常经典的强一致性、中心化的原子提交协议。中心化是指协议中有两类节点：一个中心化协调者节点（coordinator）和N个参与者节点（participant、cohort）。
+
+协议的每一次事务提交分为两个阶段：
+
+- 第一阶段，协调者询问所有的参与者是否可以提交事务（请参与者投票），所有参与者向协调者投票。
+
+- 第二阶段，协调者根据所有参与者的投票结果做出是否事务可以全局提交的决定，并通知所有的参与者执行该决定。
+
+在一个两阶段提交流程中，参与者不能改变自己的投票结果。两阶段提交协议的可以全局提交的前提是所有的参与者都同意提交事务，只要有一个参与者投票选择放弃(abort)事务，则事务必须被放弃。
+
+![2PC Propose/Vote](https://the-paper-trail.org/wp-content/uploads/2010/01/tpc-fault-free-phase-1.png)
+
+![2PC Commit/Abort](https://the-paper-trail.org/wp-content/uploads/2010/01/tpc-fault-free-phase-2.png)
+
+文献参考：[https://www.the-paper-trail.org/post/2008-11-27-consensus-protocols-two-phase-commit/](https://www.the-paper-trail.org/post/2008-11-27-consensus-protocols-two-phase-commit/)
+
+### TCC定义
+
+关于TCC（Try-Confirm-Cancel）的概念，最早是由Pat Helland于2007年发表的一篇名为《Life beyond Distributed Transactions:an Apostate’s Opinion》的论文提出。在该论文中，TCC还是以Tentative-Confirmation-Cancellation作为名称；正式以Try-Confirm-Cancel作为名称的，可能是Atomikos（Gregor Hohpe所著书籍《Enterprise Integration Patterns》中收录了关于TCC的介绍，提到了Atomikos的Try-Confirm-Cancel，并认为二者是相似的概念）。
+
+![TCC](https://www.enterpriseintegrationpatterns.com/img/TryConfirmCancelState.png)
+
+文献参考: [https://www.enterpriseintegrationpatterns.com/patterns/conversation/TryConfirmCancel.html](https://www.enterpriseintegrationpatterns.com/patterns/conversation/TryConfirmCancel.html)
+
+这里以 `Try-Confirm-Cancel` 作为全称来理解。
+
 ### 术语定义
 
-- `Initiator`: 作为事务发起方，它是聚合根
+- `Initiator`: 事务发起方，它是聚合根，用于维护事务状态
 
-- `Participant`: 作为事务参与方（仅被修改的聚合根，新增的，不会产生业务失败问题），它是聚合根
+- `ProcessManager`: CQRS中的概念，作为事务相关消息路由的角色，用于协调 `Participant`
+
+- `Coordinator`: 事务协调者，是 `Initiator` + `ProcessManager` 的概念总和
+
+- `Participant`: 事务参与方（仅被修改的聚合根，新增的，不会产生业务失败问题），它是聚合根，负责接受 `PreCommit`、`Commit`、`Rollback`以处理自身业务
 
 - `Preparation`: `Participant` 的事务准备，表示参与事务的业务修改行为，一个事务准备可以用于不同事务
 
-- `Transaction`: 2PC事务，从开始事务，到事务完成，贯穿整个事务生命周期；可以只是一个标识ID（通常使用 `TransactionStarted` 事件的ID），也可以使用代表事务的聚合根（如银行转账的转账事务聚合根）
-
-- `ProcessManager`: CQRS中的概念，作为事务相关消息路由的角色，负责响应 `DomainEvent`、`DomainException` 消息，并发送 `Command` 消息
+- `Transaction`: 2PC事务，可以只是一个标识ID（通常使用 `TransactionStarted` 事件的ID），也可以使用代表事务的聚合根（如银行转账的转账事务聚合根）
 
 #### Initiator 命令定义
 
