@@ -46,7 +46,7 @@ dotnet add package Eventual2PC
 
 ### 术语定义
 
-- `Initiator`: 事务发起方，它是聚合根，用于维护事务状态；如果本身也参与当前事务，那么在发起事务时的业务校验等效于`PreCommit`，在处理 `CommittedParticipantAdded` 事件时修改自身状态等效于 `Commit`
+- `Initiator`: 事务发起方，它是聚合根，用于维护事务状态；如果本身也参与当前事务，那么在发起事务时的业务校验等效于`PreCommit`，在处理 `TransactionCompleted` 事件时修改自身状态等效于 `Commit`
 
 - `ProcessManager`: CQRS中的概念，作为事务相关消息路由的角色，用于协调 `Participant`
 
