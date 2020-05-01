@@ -46,13 +46,13 @@ dotnet add package Eventual2PC
 
 ### 术语定义
 
-- `Initiator`: 事务发起方，它是聚合根，用于维护事务状态
+- `Initiator`: 事务发起方，它是聚合根，用于维护事务状态；如果本身也参与当前事务，那么在发起事务时的业务校验等效于`PreCommit`，在处理 `CommittedParticipantAdded` 事件时修改自身状态等效于 `Commit`
 
 - `ProcessManager`: CQRS中的概念，作为事务相关消息路由的角色，用于协调 `Participant`
 
 - `Coordinator`: 事务协调者，是 `Initiator` + `ProcessManager` 的概念总和
 
-- `Participant`: 事务参与方（仅被修改的聚合根，新增的，不会产生业务失败问题），它是聚合根，负责接受 `PreCommit`、`Commit`、`Rollback`以处理自身业务
+- `Participant`: 事务参与方（仅针对被修改的聚合根，因为新增不会产生业务失败问题；若需要新增的聚合根参与事务，可以在 `ProcessManager` 响应 `AllParticipantPreCommitSucceed` 事件时发送命令消息），它是聚合根，负责接受 `PreCommit`、`Commit`、`Rollback`以处理自身业务
 
 - `Preparation`: `Participant` 的事务准备，表示参与事务的业务修改行为，一个事务准备可以用于不同事务
 
@@ -80,11 +80,11 @@ dotnet add package Eventual2PC
 
 - `AnyParticipantPreCommitFailed`: 任意一个参与者预提交已失败事件
 
-- `CommittedParticipantAdded`: 已提交的参与者已添加事件（Option）
+- `CommittedParticipantAdded`: 已提交的参与者已添加事件
 
-- `RolledbackParticipantAdded`: 已回滚的参与者已添加事件（Option）
+- `RolledbackParticipantAdded`: 已回滚的参与者已添加事件
 
-- `TransactionCompleted`: 事务已完成事件（Option），并包含是否事务已提交的状态
+- `TransactionCompleted`: 事务已完成事件，并包含是否事务已提交的状态
 
 #### Participant 命令定义
 
@@ -114,7 +114,7 @@ dotnet add package Eventual2PC
 
 - `Initiator` 的聚合根实例，如果处于事务A中，那么将不允许作为事务B的 `Participant`，直到事务A结束，才允许
 
-- `Initiator` 的聚合根实例，仅允许发起一个事务，只有事务完成后，才可以发起其他事务；此处的事务完成，可以是 `AllParticipantPreCommitSucceed`、`AnyParticipantPreCommitFailed`、`TransactionCompleted` 之一
+- `Initiator` 的聚合根实例，仅允许发起一个事务，只有事务完成后，才可以发起其他事务；此处的事务完成，以是否发布`TransactionCompleted`事件为准
 
 - `Participant` 参与事务的业务修改行为有多少个，对应定义多少个`Preparation`，与参与的事务数无关
 
@@ -123,8 +123,6 @@ dotnet add package Eventual2PC
 - `Initiator` 必须发布事件 `TransactionStarted`、`PreCommitSucceedParticipantAdded`、`PreCommitFailedParticipantAdded`、`AllParticipantPreCommitSucceed`、`AnyParticipantPreCommitFailed`
 
 - `Participant` 必须发布事件 `PreCommitSucceed`、`PreCommitFailed`、`Committed`、`Rolledback`
-
-- 如果需要关注 `Transaction` 是否已完成，则 `Initiator`  需要发布事件 `CommittedParticipantAdded`、`RolledbackParticipantAdded`、`TransactionCompleted`
 
 ### 处理流程
 
@@ -177,3 +175,7 @@ dotnet add package Eventual2PC
 ### 1.0.0（2020/4/25）
 
 - 初始版本
+
+## 鸣谢
+
+非常感谢 ENode群，热线人提出的各种异议，以及 [ENode](http://github.com/tangxuehua/enode) 的作者 汤雪华 给的建议和阐述2PC概念即ENode设计理念。
