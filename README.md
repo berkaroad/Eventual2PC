@@ -44,8 +44,6 @@ dotnet add package Eventual2PC
 
 文献参考: [https://www.enterpriseintegrationpatterns.com/patterns/conversation/TryConfirmCancel.html](https://www.enterpriseintegrationpatterns.com/patterns/conversation/TryConfirmCancel.html)
 
-这里以 `Try-Confirm-Cancel` 作为全称来理解。
-
 ### 术语定义
 
 - `Initiator`: 事务发起方，它是聚合根，用于维护事务状态

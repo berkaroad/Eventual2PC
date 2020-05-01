@@ -17,7 +17,7 @@
     <ContentTargetFolders>_content</ContentTargetFolders>
     <Description>最终一致性二阶段提交范式，简化多聚合根之间交互事务的实现。</Description>
     <Summary>最终一致性二阶段提交范式，简化多聚合根之间交互事务的实现。</Summary>
-    <PackageTags>2pc eventual transaction processmanager saga eda cqrs</PackageTags>
+    <PackageTags>2pc tcc eventual transaction processmanager saga eda cqrs</PackageTags>
     <PackageReleaseNotes>1）`ITransactionInitiator`接口增加属性 `CurrentTransactionId`、`CurrentTransactionType`
 2）增加事务流转过程中产生的 `Command` 的接口定义
     </PackageReleaseNotes>
