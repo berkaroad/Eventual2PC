@@ -178,4 +178,4 @@ dotnet add package Eventual2PC
 
 ## 鸣谢
 
-非常感谢 ENode群，热线人提出的各种异议，以及 [ENode](http://github.com/tangxuehua/enode) 的作者 汤雪华 给的建议和阐述2PC概念、ENode设计理念，并提供了宝贵的意见。
+非常感谢 ENode群，热线人提出的各种异议，以及 [ENode](http://github.com/tangxuehua/enode) 的作者 汤雪华 阐述2PC概念、ENode设计理念，提供了宝贵的意见。
