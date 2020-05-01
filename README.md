@@ -4,13 +4,17 @@
 
 由于是最终一致性，且事务控制在业务端，此处的 `2PC` 概念，可以等效于 `TCC` 概念。
 
-基于ENode的CQRS框架的实现案例 [ENode.Eventual2PC](https://github.com/berkaroad/ENode.Eventual2PC)
-
 ## 安装
 
 ```
 dotnet add package Eventual2PC
 ```
+
+## 实现案例
+
+### 基于ENode的CQRS框架的实现
+
+[ENode.Eventual2PC](https://github.com/berkaroad/ENode.Eventual2PC)
 
 ## 文档
 
