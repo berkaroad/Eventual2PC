@@ -2,7 +2,7 @@
 
 最终一致性2PC范式，提供多聚合根之间交互事务的抽象接口。任何基于cqrs + eda 实现多聚合根最终一致性的框架，都可基于此接口进行实现，以达到提高开发效率的目的。
 
-由于是最终一致性，且事务控制在业务端，此处的 `2PC` 概念，可以等效于 `TCC` 概念。
+由于事务控制也在业务端，所以此处的 `2PC` 概念，可以等效于 `TCC` 概念；目前不支持 `Timeout` 隐式 `Cancel`。
 
 ## 安装
 
@@ -48,13 +48,13 @@ TCC（Try-Confirm-Cancel）又称补偿事务。其核心思想是："针对每�
 
 TCC事务的处理流程与2PC两阶段提交类似，不过2PC通常都是在跨库的DB层面，而TCC本质上就是一个应用层面的2PC，需要通过业务逻辑来实现。这种分布式事务的实现方式的优势在于，可以让应用自己定义数据库操作的粒度，使得降低锁冲突、提高吞吐量成为可能。
 
-而不足之处则在于对应用的侵入性非常强，业务逻辑的每个分支都需要实现try、confirm、cancel三个操作。此外，其实现难度也比较大，需要按照网络状态、系统故障等不同的失败原因实现不同的回滚策略。为了满足一致性的要求，confirm和cancel接口还必须实现幂等。
+为了满足一致性的要求，confirm和cancel接口还必须实现幂等。
 
 ![TCC](https://www.enterpriseintegrationpatterns.com/img/TryConfirmCancelState.png)
 
 文献参考: [https://www.enterpriseintegrationpatterns.com/patterns/conversation/TryConfirmCancel.html](https://www.enterpriseintegrationpatterns.com/patterns/conversation/TryConfirmCancel.html)
 
-### 术语定义
+### 术语
 
 - `Initiator`: 事务发起方，它是聚合根，用于维护事务状态；如果本身也参与当前事务，那么在发起事务时的业务校验等效于`PreCommit`，在处理 `TransactionCompleted` 事件时修改自身状态等效于 `Commit`
 
@@ -68,7 +68,7 @@ TCC事务的处理流程与2PC两阶段提交类似，不过2PC通常都是在�
 
 - `Transaction`: 2PC事务，可以只是一个标识ID（通常使用 `TransactionStarted` 事件的ID），也可以使用代表事务的聚合根（如银行转账的转账事务聚合根）
 
-#### Initiator 命令定义
+#### Initiator 命令
 
 - `AddPreCommitSucceedParticipant`: 添加预提交成功的参与方
 
@@ -78,7 +78,7 @@ TCC事务的处理流程与2PC两阶段提交类似，不过2PC通常都是在�
 
 - `AddRolledbackParticipant`: 添加已回滚的参与方
 
-#### Initiator 事件定义
+#### Initiator 事件
 
 - `TransactionStarted`: 事务已发起事件
 
@@ -96,7 +96,7 @@ TCC事务的处理流程与2PC两阶段提交类似，不过2PC通常都是在�
 
 - `TransactionCompleted`: 事务已完成事件，并包含是否事务已提交的状态
 
-#### Participant 命令定义
+#### Participant 命令
 
 - `PreCommit`: 预提交
 
@@ -104,7 +104,7 @@ TCC事务的处理流程与2PC两阶段提交类似，不过2PC通常都是在�
 
 - `Rollback`: 回滚
 
-#### Participant 事件定义
+#### Participant 事件
 
 - `PreCommitSucceed`: 预提交已成功事件
 
@@ -120,7 +120,7 @@ TCC事务的处理流程与2PC两阶段提交类似，不过2PC通常都是在�
 
 - 一个聚合根，可以同时扮演事务A中的 `Participant` 和事务B的 `Initiator`
 
-- `Initiator` 的聚合根实例，发起事务时，必须存在至少一个  `Participant`，且不能把自己作为 `Participant`
+- `Initiator` 的聚合根实例，发起事务时，必须存在至少一个  `Participant`，且不能把自己作为 `Participant`；如果自己参与事务中，则通过发起事务都位置进行业务校验，在处理 `TransactionCompleted` 事件时提交业务修改
 
 - `Initiator` 的聚合根实例，如果处于事务A中，那么将不允许作为事务B的 `Participant`，直到事务A结束，才允许
 
@@ -130,41 +130,55 @@ TCC事务的处理流程与2PC两阶段提交类似，不过2PC通常都是在�
 
 - `Participant` 的聚合根实例，允许同时参与多个不同的事务；也可以通过业务代码，在 `PreCommit` 时，判断是否存在其他类型的 `Preparation` 来阻止当前 `Preparation` 的 `PreCommit` 操作
 
-- `Initiator` 必须发布事件 `TransactionStarted`、`PreCommitSucceedParticipantAdded`、`PreCommitFailedParticipantAdded`、`AllParticipantPreCommitSucceed`、`AnyParticipantPreCommitFailed`
-
-- `Participant` 必须发布事件 `PreCommitSucceed`、`PreCommitFailed`、`Committed`、`Rolledback`
+- `Initiator` 和 `Participant` 的命令处理都必须支持幂等
 
 ### 处理流程
 
-- `Initiator` 发布 `TransactionStarted` 事件；
+- `Initiator` 发布 `TransactionStarted` 事件
 
-- `ProcessManager` 响应 `TransactionStarted` 事件，并发送 `PreCommit` 命令；
+- `ProcessManager` 响应 `TransactionStarted` 事件，并发送 `PreCommit` 命令
 
-- `Participant` 接受命令 `PreCommit`，如果成功，则发布 `PreCommitSucceed` 事件；如果失败，则发布 `PreCommitFailed` 事件（或领域异常）；
+- `Participant` 处理命令 `PreCommit`
 
-- `ProcessManager` 响应 `PreCommitSucceed`，并发送 `AddPreCommitSucceedParticipant` 命令；
+    - 如果成功，则发布 `PreCommitSucceed` 事件；
+    
+    - 如果失败，则发布 `PreCommitFailed` 事件（或领域异常）。
 
-- `ProcessManager` 响应 `PreCommitFailed`，并发送 `AddPreCommitFailedParticipant` 命令；
+- `ProcessManager` 响应 `PreCommitSucceed`，并发送 `AddPreCommitSucceedParticipant` 命令
 
-- `Initiator` 接受命令 `AddPreCommitSucceedParticipant`，发布 `PreCommitSucceedParticipantAdded` 事件；如果所有 `Participant` 的 `PreCommit` 都已处理完成，则发布 `AllParticipantPreCommitSucceed` 事件；
+- `ProcessManager` 响应 `PreCommitFailed`，并发送 `AddPreCommitFailedParticipant` 命令
 
-- `Initiator` 接受命令 `AddPreCommitFailedParticipant`，发布 `PreCommitFailedParticipantAdded` 事件；如果所有 `Participant` 的 `PreCommit` 都已处理完成，则发布 `AnyParticipantPreCommitFailed` 事件；
+- `Initiator` 处理命令 `AddPreCommitSucceedParticipant`，发布 `PreCommitSucceedParticipantAdded` 事件
 
-- `ProcessManager` 响应 `AllParticipantPreCommitSucceed`，并发送 `Commit` 命令；
+    - 如果所有 `Participant` 的 `PreCommit` 都已处理完成且都成功，则再发布 `AllParticipantPreCommitSucceed` 事件；
+    
+    - 如果已处理完成，但存在失败，则再发布 `AnyParticipantPreCommitFailed` 事件。
 
-- `ProcessManager` 响应 `AnyParticipantPreCommitFailed`，并发送 `Rollback` 命令；
+- `Initiator` 处理命令 `AddPreCommitFailedParticipant`，发布 `PreCommitFailedParticipantAdded` 事件
 
-- `Participant` 接受命令 `Commit`，并发布 `Committed` 事件；
+    - 如果所有 `Participant` 的 `PreCommit` 都已处理完成，则发布 `AnyParticipantPreCommitFailed` 事件；
+    
+    - 如果已处理完成，且都失败，则再发布 `TransactionCompleted` 事件。
 
-- `Participant` 接受命令 `Rollback`，并发布 `Rolledback` 事件；
+- `ProcessManager` 响应 `AllParticipantPreCommitSucceed`，并发送 `Commit` 命令
 
-- `ProcessManager` 响应 `Committed`，并发送 `AddCommittedParticipant` 命令；
+- `ProcessManager` 响应 `AnyParticipantPreCommitFailed`，并发送 `Rollback` 命令
 
-- `ProcessManager` 响应 `Rolledback`，并发送 `AddRolledbackParticipant` 命令；
+- `Participant` 处理命令 `Commit`，并发布 `Committed` 事件
 
-- `Initiator` 接受命令 `AddCommittedParticipant`，发布 `CommittedParticipantAdded` 事件；如果所有 `Participant` 的 `Commit` 都已处理完成，则发布 `TransactionCompleted` 事件；
+- `Participant` 处理命令 `Rollback`，并发布 `Rolledback` 事件
 
-- `Initiator` 接受命令 `AddRolledbackParticipant`，发布 `RolledbackParticipantAdded` 事件；如果所有 `Participant` 的 `Rolledback` 都已处理完成，则发布 `TransactionCompleted` 事件。
+- `ProcessManager` 响应 `Committed`，并发送 `AddCommittedParticipant` 命令
+
+- `ProcessManager` 响应 `Rolledback`，并发送 `AddRolledbackParticipant` 命令
+
+- `Initiator` 处理命令 `AddCommittedParticipant`，发布 `CommittedParticipantAdded` 事件
+
+    - 如果所有 `Participant` 的 `Commit` 都已处理完成，则再发布 `TransactionCompleted` 事件。
+
+- `Initiator` 处理命令 `AddRolledbackParticipant`，发布 `RolledbackParticipantAdded` 事件
+
+    - 如果所有 `Participant` 的 `Rolledback` 都已处理完成，则再发布 `TransactionCompleted` 事件。
 
 ## 发布历史
 
